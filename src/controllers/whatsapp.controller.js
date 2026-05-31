@@ -1,10 +1,11 @@
+import { generateAgentReply } from "../services/openai.service.js";
+import { getConversationHistory, saveMessage } from "../services/memory.service.js";
 import { sendWhatsAppMessage } from "../services/twilio.service.js";
 
 export async function handleIncomingWhatsAppMessage(req, res) {
   try {
     const incomingMessage = req.body.Body;
     const from = req.body.From;
-    const replyMessage = "Hola 👋 Recibí tu mensaje. Te haré unas preguntas para entender mejor tu idea de tattoo.";
 
     console.log("Incoming WhatsApp message:");
     console.log({
@@ -12,7 +13,25 @@ export async function handleIncomingWhatsAppMessage(req, res) {
       incomingMessage
     });
 
-    await sendWhatsAppMessage(from, replyMessage);
+    saveMessage(from, "user", incomingMessage);
+
+    const conversationHistory = getConversationHistory(from);
+    const previousHistory = conversationHistory.slice(0, -1);
+
+    const reply = await generateAgentReply({
+      phone: from,
+      message: incomingMessage,
+      history: previousHistory
+    });
+
+    console.log("Generated WhatsApp reply:", {
+      to: from,
+      reply
+    });
+
+    saveMessage(from, "assistant", reply);
+
+    await sendWhatsAppMessage(from, reply);
 
     res.status(200).send("Message received");
   } catch (error) {
