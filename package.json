@@ -1,0 +1,21 @@
+{
+  "name": "whatsapp-agent-mvp",
+  "version": "1.0.0",
+  "description": "Reusable WhatsApp AI agent MVP for Nones Atelier",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js"
+  },
+  "keywords": [],
+  "author": "Santiago Nones",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
