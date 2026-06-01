@@ -1,5 +1,6 @@
 import { extractTattooLead } from "../services/leadExtractor.service.js";
 import { saveLead } from "../services/leadStore.service.js";
+import { createTattooHandoffSummary, saveHandoff } from "../services/handoff.service.js";
 import { generateAgentReply } from "../services/openai.service.js";
 import { getMediaItemsFromTwilioPayload } from "../services/media.service.js";
 import { getConversationHistory, saveMessage } from "../services/memory.service.js";
@@ -62,6 +63,17 @@ export async function handleIncomingWhatsAppMessage(req, res) {
         missingFields: lead.missingFields,
         nextAction: lead.nextAction
       });
+
+      if (lead.leadStatus === "qualified") {
+        const handoff = createTattooHandoffSummary(lead);
+        saveHandoff(handoff);
+
+        console.log("Qualified lead handoff ready", {
+          phone: handoff.phone,
+          title: handoff.title,
+          recommendedNextAction: handoff.recommendedNextAction
+        });
+      }
     } catch (error) {
       console.error("Tattoo lead extraction failed:", {
         phone: from,
