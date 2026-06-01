@@ -1,6 +1,6 @@
 # WhatsApp Agent MVP
 
-This is a reusable WhatsApp AI intake agent backend for local service businesses, currently implemented as a tattoo studio intake assistant.
+Reusable WhatsApp AI intake agent backend for local service businesses, currently implemented as a tattoo studio intake assistant.
 
 ## Current Capabilities
 
@@ -15,14 +15,14 @@ This is a reusable WhatsApp AI intake agent backend for local service businesses
 
 ## Architecture Overview
 
-```
+```txt
 WhatsApp user
   → Twilio Sandbox
     → ngrok
       → Express backend
-        → OpenAI
-          → Twilio reply
-            → local memory / lead / handoff storage
+        → OpenAI reply generation
+        → Twilio WhatsApp response
+        → local memory / lead / handoff storage
 ```
 
 ## Stack
@@ -33,20 +33,21 @@ WhatsApp user
 - OpenAI SDK
 - dotenv
 - ngrok
-- local JSON storage
+- Local JSON storage
 
 ## Folder Structure
 
 - `src/controllers` — webhook entry point and flow orchestration
 - `src/routes` — webhook route definitions
-- `src/services` — Twilio messaging, OpenAI replies, media handling, memory, lead extraction, lead storage, handoff generation
+- `src/services` — Twilio messaging, OpenAI replies, media handling, memory, lead extraction, lead storage, and handoff generation
 - `src/agents` — base WhatsApp assistant prompt
-- `src/skills` — tattoo intake prompt and logic
+- `src/skills` — tattoo intake prompt and behavior rules
 - `data/` — ignored local runtime files for conversations, leads, and handoffs
 
 ## Local Setup
 
 1. Install dependencies:
+
    ```bash
    npm install
    ```
@@ -56,18 +57,29 @@ WhatsApp user
 3. Add your Twilio credentials and OpenAI API key to `.env`.
 
 4. Start the development server:
+
    ```bash
    npm run dev
    ```
 
 5. Run ngrok to expose your local server:
+
    ```bash
    ngrok http 3000
    ```
 
+   If ngrok is not installed globally, run it from its local path.
+
 6. Configure your Twilio Sandbox webhook:
-   ```
+
+   ```txt
    https://YOUR_NGROK_URL/webhook/whatsapp
+   ```
+
+   Method:
+
+   ```txt
+   POST
    ```
 
 ## Environment Variables
@@ -88,19 +100,30 @@ WhatsApp user
 4. Provide placement, size, style, availability, and first-tattoo status.
 5. Check `data/leads.json` and `data/handoffs.json` locally.
 
+## Local Runtime Data
+
+The app stores local runtime data in ignored JSON files:
+
+- `data/conversations.json`
+- `data/leads.json`
+- `data/handoffs.json`
+
+These files are not committed to Git.
+
 ## Current Limitations
 
-- Uses Twilio Sandbox, not production WhatsApp Business yet.
-- Uses local JSON files, not a production database.
-- No dashboard yet.
-- No scheduling or payments yet.
-- No multi-client configuration yet.
-- Local data is not committed to Git.
+- Uses Twilio Sandbox, not production WhatsApp Business yet
+- Uses local JSON files, not a production database
+- No dashboard yet
+- No scheduling or payments yet
+- No pricing rules module yet
+- No multi-client configuration yet
+- Local runtime data is not committed to Git
 
 ## Next Milestones
 
-- Owner notification by email or WhatsApp.
-- Google Sheets or database persistence.
-- Pricing rules module.
-- Scheduling module.
-- Second agent skill for moving companies.
+- Owner notification by email or WhatsApp
+- Google Sheets or database persistence
+- Pricing rules module
+- Scheduling module
+- Second agent skill for moving companies
