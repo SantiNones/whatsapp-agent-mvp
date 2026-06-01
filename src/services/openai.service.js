@@ -30,6 +30,7 @@ export async function generateAgentReply({ phone, message, history, mediaItems =
     let imageIncludedInOpenAIRequest = false;
     let imageProcessingFallbackUsed = false;
     let currentUserContent = message || "";
+    let imageDataUrl = null;
 
     if (hasImage && !currentUserContent) {
       currentUserContent = "El usuario envió una imagen de referencia para el tatuaje.";
@@ -37,7 +38,7 @@ export async function generateAgentReply({ phone, message, history, mediaItems =
 
     if (hasImage) {
       try {
-        const imageDataUrl = await downloadTwilioMediaAsDataUrl(
+        imageDataUrl = await downloadTwilioMediaAsDataUrl(
           imageItems[0].url,
           imageItems[0].contentType
         );
@@ -106,13 +107,43 @@ export async function generateAgentReply({ phone, message, history, mediaItems =
       ]
     });
 
-    return completion.choices[0]?.message?.content?.trim() || FALLBACK_REPLY;
+    const reply = completion.choices[0]?.message?.content?.trim() || FALLBACK_REPLY;
+
+    let imageReferenceSummary = null;
+
+    if (imageIncludedInOpenAIRequest && imageDataUrl) {
+      try {
+        const summaryCompletion = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          temperature: 0,
+          max_tokens: 80,
+          messages: [
+            {
+              role: "system",
+              content: "Describe this tattoo reference image in one concise sentence (max 20 words). Include: subject, style, colors, and detail level. Plain text only, no punctuation at start."
+            },
+            {
+              role: "user",
+              content: [{ type: "image_url", image_url: { url: imageDataUrl } }]
+            }
+          ]
+        });
+
+        imageReferenceSummary = summaryCompletion.choices[0]?.message?.content?.trim() || null;
+
+        console.log("Image reference summary generated", { summary: imageReferenceSummary });
+      } catch (summaryError) {
+        console.error("Image summary generation failed:", { message: summaryError.message });
+      }
+    }
+
+    return { reply, imageReferenceSummary };
   } catch (error) {
     console.error("OpenAI reply generation failed:", {
       phone,
       message: error.message
     });
 
-    return FALLBACK_REPLY;
+    return { reply: FALLBACK_REPLY, imageReferenceSummary: null };
   }
 }

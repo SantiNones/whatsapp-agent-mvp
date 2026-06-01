@@ -30,7 +30,7 @@ export async function handleIncomingWhatsAppMessage(req, res) {
     const conversationHistory = getConversationHistory(from);
     const previousHistory = conversationHistory.slice(0, -1);
 
-    const reply = await generateAgentReply({
+    const { reply, imageReferenceSummary } = await generateAgentReply({
       phone: from,
       message: incomingMessage,
       history: previousHistory,
@@ -43,6 +43,11 @@ export async function handleIncomingWhatsAppMessage(req, res) {
     });
 
     saveMessage(from, "assistant", reply);
+
+    if (imageReferenceSummary) {
+      saveMessage(from, "system", `Image reference summary: ${imageReferenceSummary}`);
+      console.log("Image reference summary saved to memory", { phone: from });
+    }
 
     await sendWhatsAppMessage(from, reply);
 
