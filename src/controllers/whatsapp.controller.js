@@ -1,3 +1,5 @@
+import { extractTattooLead } from "../services/leadExtractor.service.js";
+import { saveLead } from "../services/leadStore.service.js";
 import { generateAgentReply } from "../services/openai.service.js";
 import { getMediaItemsFromTwilioPayload } from "../services/media.service.js";
 import { getConversationHistory, saveMessage } from "../services/memory.service.js";
@@ -42,6 +44,30 @@ export async function handleIncomingWhatsAppMessage(req, res) {
     saveMessage(from, "assistant", reply);
 
     await sendWhatsAppMessage(from, reply);
+
+    try {
+      const latestHistory = getConversationHistory(from);
+      const lead = await extractTattooLead({
+        phone: from,
+        history: latestHistory,
+        latestMessage: incomingMessage,
+        mediaItems
+      });
+
+      saveLead(lead);
+
+      console.log("Tattoo lead extracted:", {
+        phone: lead.phone,
+        leadStatus: lead.leadStatus,
+        missingFields: lead.missingFields,
+        nextAction: lead.nextAction
+      });
+    } catch (error) {
+      console.error("Tattoo lead extraction failed:", {
+        phone: from,
+        message: error.message
+      });
+    }
 
     res.status(200).send("Message received");
   } catch (error) {
